@@ -1,8 +1,21 @@
 import axios from 'axios';
 
-// Use /api directly which Vite proxies to http://localhost:5000 in dev
+// Automatically resolve API URL:
+// 1. Explicit VITE_API_URL environment variable if provided
+// 2. If running deployed on Vercel/web, point directly to live Vercel backend
+// 3. If running locally on localhost, use /api which Vite proxies to localhost:5000
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '');
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (isLocalhost ? '/api' : 'https://server-psi-two-57.vercel.app/api');
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
