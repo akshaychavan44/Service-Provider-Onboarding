@@ -1,0 +1,375 @@
+{
+  "info": {
+    "name": "Trizen Service Provider Onboarding Portal API",
+    "_postman_id": "trizen-api-v1",
+    "description": "Comprehensive REST API Collection for Trizen Service Provider Onboarding Portal. Covers Authentication, Multi-step Provider Onboarding, Document Verification, and Administrator Review Workflows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "providerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register New Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amit Verma\",\n  \"email\": \"amit.verma@example.com\",\n  \"phone\": \"9876543210\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login - Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rahul@example.com\",\n  \"password\": \"Provider@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Provider Onboarding",
+      "item": [
+        {
+          "name": "Get Provider Onboarding Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/provider/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["provider", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile Details (Draft)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amit Verma\",\n  \"phone\": \"9876543210\",\n  \"dateOfBirth\": \"1994-06-15\",\n  \"gender\": \"Male\",\n  \"bio\": \"Experienced residential electrician with high safety standards.\",\n  \"experience\": 5,\n  \"skills\": [\"Electrical Wiring\", \"Earthing\", \"Circuit Breakers\"],\n  \"serviceCategories\": [\"Electrician\"],\n  \"address\": \"Flat 204, Royal Palms, Sector 21\",\n  \"city\": \"Noida\",\n  \"state\": \"Uttar Pradesh\",\n  \"pincode\": \"201301\",\n  \"serviceRadius\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/provider/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["provider", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Upload Profile Photo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/provider/profile-photo",
+              "host": ["{{baseUrl}}"],
+              "path": ["provider", "profile-photo"]
+            }
+          }
+        },
+        {
+          "name": "Upload Verification Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "documentType",
+                  "value": "id_proof",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/provider/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["provider", "documents"]
+            }
+          }
+        },
+        {
+          "name": "Get Uploaded Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/provider/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["provider", "documents"]
+            }
+          }
+        },
+        {
+          "name": "Submit Application for Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/provider/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["provider", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Get Application Status & Timeline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{providerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/provider/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["provider", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Admin Management",
+      "item": [
+        {
+          "name": "Get Dashboard Metrics & Recent Apps",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "List Providers (Search, Filter & Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/providers?page=1&limit=10&status=Submitted",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "providers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "Submitted" },
+                { "key": "search", "value": "" },
+                { "key": "service", "value": "" },
+                { "key": "city", "value": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Provider Dossier by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/providers/{{providerProfileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "providers", "{{providerProfileId}}"]
+            }
+          }
+        },
+        {
+          "name": "Approve Provider Application",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/providers/{{providerProfileId}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "providers", "{{providerProfileId}}", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Reject Provider Application",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remarks\": \"Please upload a clear government issued ID proof document.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/providers/{{providerProfileId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "providers", "{{providerProfileId}}", "reject"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
