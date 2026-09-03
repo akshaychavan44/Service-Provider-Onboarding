@@ -22,9 +22,22 @@ app.use(
     origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   })
 );
+
+// Preflight CORS Handler for all routes
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Requested-With, Accept'
+  );
+  res.header('Access-Control-Allow-Credentials', 'true');
+  return res.sendStatus(200);
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -41,7 +54,13 @@ app.use('/uploads', express.static(staticUploads));
 // Serverless DB Connection Middleware
 app.use(async (req, res, next) => {
   // Allow health check and root even without DB
-  if (req.path === '/' || req.path === '/api/health') {
+  if (
+    req.path === '/' ||
+    req.path === '/api' ||
+    req.path === '/api/' ||
+    req.path === '/api/health' ||
+    req.method === 'OPTIONS'
+  ) {
     return next();
   }
 
@@ -58,8 +77,8 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Root Welcome Endpoint
-app.get('/', (req, res) => {
+// Root Welcome Endpoint (Accepts GET, POST, OPTIONS, etc.)
+app.all('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Trizen Service Provider Onboarding API is active.',
@@ -73,6 +92,13 @@ app.get('/', (req, res) => {
   });
 });
 
+app.all('/api', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Trizen Service Provider Onboarding API is active.',
+  });
+});
+
 // API Health Check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -83,10 +109,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Mount Routes
+// Mount Routes (under both /api/* and /* for maximum flexibility)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/provider', providerRoutes);
+app.use('/provider', providerRoutes);
+
 app.use('/api/admin', adminRoutes);
+app.use('/admin', adminRoutes);
 
 // Error Middlewares
 app.use(notFound);
