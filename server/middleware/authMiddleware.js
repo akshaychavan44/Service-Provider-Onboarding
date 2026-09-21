@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
 const authMiddleware = async (req, res, next) => {
@@ -22,12 +23,23 @@ const authMiddleware = async (req, res, next) => {
     const secret = process.env.JWT_SECRET || 'trizen_jwt_super_secret_key_2026';
     const decoded = jwt.verify(token, secret);
 
-    const user = await User.findById(decoded.id).select('-password');
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'The user belonging to this token no longer exists.',
-      });
+    let user;
+    if (mongoose.connection.readyState === 1) {
+      user = await User.findById(decoded.id).select('-password');
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'The user belonging to this token no longer exists.',
+        });
+      }
+    } else {
+      user = {
+        _id: decoded.id,
+        id: decoded.id,
+        name: decoded.name || 'Demo User',
+        email: decoded.email,
+        role: decoded.role,
+      };
     }
 
     req.user = user;

@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const ProviderProfile = require('../models/ProviderProfile');
 const {
@@ -113,6 +114,69 @@ const login = async (req, res, next) => {
       });
     }
 
+    // Offline / Demo fallback when MongoDB is not connected
+    if (mongoose.connection.readyState !== 1) {
+      const emailLower = (email || '').toLowerCase().trim();
+      if (emailLower === 'admin@example.com' && password === 'Admin@123') {
+        const mockAdmin = {
+          _id: '6633a1111111111111111111',
+          name: 'Trizen Admin',
+          email: 'admin@example.com',
+          phone: '+91 9876543210',
+          role: 'admin',
+        };
+        const token = generateToken(mockAdmin);
+        return res.status(200).json({
+          success: true,
+          message: 'Welcome back, Trizen Admin!',
+          data: {
+            user: mockAdmin,
+            token,
+            profile: null,
+          },
+        });
+      }
+
+      if (
+        (emailLower === 'rahul@example.com' && password === 'Provider@123') ||
+        (emailLower === 'priya.patel@example.com' && password === 'Password@123') ||
+        (emailLower === 'vikram.verma@example.com' && password === 'Password@123') ||
+        (emailLower === 'anita.desai@example.com' && password === 'Password@123')
+      ) {
+        const isRahul = emailLower === 'rahul@example.com';
+        const mockProvider = {
+          _id: isRahul ? '6633a2222222222222222222' : '6633a3333333333333333333',
+          name: isRahul ? 'Rahul Sharma' : 'Demo Provider',
+          email: emailLower,
+          phone: '+91 9123456780',
+          role: 'provider',
+        };
+        const token = generateToken(mockProvider);
+        return res.status(200).json({
+          success: true,
+          message: `Welcome back, ${mockProvider.name}!`,
+          data: {
+            user: mockProvider,
+            token,
+            profile: {
+              id: '6633a4444444444444444444',
+              _id: '6633a4444444444444444444',
+              applicationStatus: isRahul ? 'Approved' : 'Submitted',
+              completionPercentage: isRahul ? 100 : 75,
+              serviceCategories: ['Electrician', 'Appliance Repair'],
+              city: 'Bangalore',
+              state: 'Karnataka',
+            },
+          },
+        });
+      }
+
+      return res.status(401).json({
+        success: false,
+        message: 'Database is offline. Please use the quick-fill Admin Demo or Provider Demo buttons to log in, or start MongoDB.',
+      });
+    }
+
     // Find user with password included
     const user = await User.findOne({ email: email.toLowerCase() }).select(
       '+password'
@@ -179,6 +243,27 @@ const login = async (req, res, next) => {
 // @access  Private
 const getMe = async (req, res, next) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          user: req.user,
+          profile:
+            req.user.role === 'provider'
+              ? {
+                  id: '6633a4444444444444444444',
+                  _id: '6633a4444444444444444444',
+                  applicationStatus: 'Approved',
+                  completionPercentage: 100,
+                  serviceCategories: ['Electrician', 'Appliance Repair'],
+                  city: 'Bangalore',
+                  state: 'Karnataka',
+                }
+              : null,
+        },
+      });
+    }
+
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({

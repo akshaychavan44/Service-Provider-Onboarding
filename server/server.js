@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
@@ -53,13 +54,17 @@ app.use('/uploads', express.static(staticUploads));
 
 // Serverless DB Connection Middleware
 app.use(async (req, res, next) => {
-  // Allow health check and root even without DB
+  // Allow health check, root, and non-API frontend navigation even without DB
   if (
     req.path === '/' ||
     req.path === '/api' ||
     req.path === '/api/' ||
     req.path === '/api/health' ||
-    req.method === 'OPTIONS'
+    req.method === 'OPTIONS' ||
+    (!req.path.startsWith('/api') &&
+      !req.path.startsWith('/auth') &&
+      !req.path.startsWith('/provider') &&
+      !req.path.startsWith('/admin'))
   ) {
     return next();
   }
@@ -68,6 +73,10 @@ app.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (err) {
+    if (process.env.NODE_ENV === 'development' && !process.env.VERCEL) {
+      console.warn(`[MongoDB Warning] Offline mode active: ${err.message}`);
+      return next();
+    }
     return res.status(503).json({
       success: false,
       message:
@@ -79,6 +88,10 @@ app.use(async (req, res, next) => {
 
 // Root Welcome Endpoint (Accepts GET, POST, OPTIONS, etc.)
 app.all('/', (req, res) => {
+  const clientDist = path.join(__dirname, '../client/dist');
+  if (req.method === 'GET' && fs.existsSync(path.join(clientDist, 'index.html'))) {
+    return res.sendFile(path.join(clientDist, 'index.html'));
+  }
   res.status(200).json({
     success: true,
     message: 'Trizen Service Provider Onboarding API is active.',
@@ -112,12 +125,32 @@ app.get('/api/health', (req, res) => {
 // Mount Routes (under both /api/* and /* for maximum flexibility)
 app.use('/api/auth', authRoutes);
 app.use('/auth', authRoutes);
+app.use('/api', authRoutes); // Supports /api/login, /api/register
+app.use('/', authRoutes);    // Supports /login, /register
 
 app.use('/api/provider', providerRoutes);
 app.use('/provider', providerRoutes);
 
 app.use('/api/admin', adminRoutes);
 app.use('/admin', adminRoutes);
+
+// Serve static frontend files if client/dist exists (allows opening app on port 5000 too)
+const clientDist = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/api') ||
+      req.path.startsWith('/auth') ||
+      req.path.startsWith('/provider') ||
+      req.path.startsWith('/admin') ||
+      req.path.startsWith('/uploads')
+    ) {
+      return next();
+    }
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
 
 // Error Middlewares
 app.use(notFound);
