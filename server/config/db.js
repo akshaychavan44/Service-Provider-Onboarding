@@ -13,6 +13,12 @@ const connectDB = async () => {
     const mongoURI =
       process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/trizen_onboarding';
 
+    if (mongoURI.includes('<db_password>') || mongoURI.includes('<password>')) {
+      throw new Error(
+        'Placeholder <db_password> detected in MONGO_URI. Please replace it with your actual MongoDB Atlas database password.'
+      );
+    }
+
     const conn = await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 5000,
       bufferCommands: false, // Fail fast in serverless if connection drops
